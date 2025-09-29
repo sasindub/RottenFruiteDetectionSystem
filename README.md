@@ -1,163 +1,149 @@
-# Advanced Fruit Quality Detection System
+# FreshGuard AI — Rotten Fruit Detection (Apples, Bananas, Oranges)
 
-This project is an **Advanced Fruit Quality Detection System** that uses **deep learning and computer vision** to classify fruits as **fresh** or **rotten**. The system currently supports **apples, bananas, and oranges**. It demonstrates the full pipeline of preprocessing, model training, evaluation, and deployment.
+An end‑to‑end fruit quality detection system that classifies images as fresh or rotten for apples, bananas, and oranges. It includes:
+
+- Model training scripts (`model.py`) that train a Simple CNN and a MobileNetV2 transfer learning model
+- Saved models (`simple_cnn_model.h5`, `mobilenetv2_model.h5`, `best_model.h5`)
+- A FastAPI web app (`main.py`) with a modern UI (`templates/index.html`) for single‑image upload and prediction
 
 ---
 
 ## Table of Contents
-
-- [Project Overview](#project-overview)  
-- [Dataset](#dataset)  
-- [Technologies Used](#technologies-used)  
-- [Setup Instructions](#setup-instructions)  
-- [Usage](#usage)  
-- [Model Details](#model-details)  
-- [Evaluation Metrics](#evaluation-metrics)  
-- [Challenges](#challenges)  
-- [Future Improvements](#future-improvements)
-
----
-
-## Project Overview
-
-Fruits are perishable and their quality directly affects human health and economy. This system automates **fresh vs rotten classification** using image data. The goal is to help farmers, sellers, and consumers quickly assess fruit quality without manual inspection.
-
-The system involves:
-
-1. **Preprocessing images** – resizing, normalization, and data augmentation.  
-2. **Training deep learning models** – Simple CNN and MobileNetV2.  
-3. **Evaluating performance** – using accuracy, precision, recall, and F1-score.  
-4. **Deploying the best model** – for real-time classification of new fruit images.
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Dataset Layout](#dataset-layout)
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Train Models](#train-models)
+- [Run the Web App](#run-the-web-app)
+- [Models and Accuracy](#models-and-accuracy)
+- [Notes and Tips](#notes-and-tips)
+- [License](#license)
+- [Author](#author)
 
 ---
 
-## Dataset
+## Features
+- **Two models**: Simple CNN and MobileNetV2 (transfer learning)
+- **Automatic best model selection** saved as `best_model.h5`
+- **FastAPI + Jinja2 UI**: drag‑and‑drop upload, live preview, styled results with confidence bar
+- **Classes**: `freshapples`, `freshbanana`, `freshoranges`, `rottenapples`, `rottenbanana`, `rottenoranges`
 
-The dataset is organized into:
+---
 
+## Project Structure
+```
+RottenFruiteDetectionSystem/
+├─ dataset/
+├─ main.py                 # FastAPI app (serves UI, /predict endpoint)
+├─ model.py                # Training for Simple CNN & MobileNetV2
+├─ templates/
+│  └─ index.html           # Modern single‑page UI
+├─ simple_cnn_model.h5     # Saved model after training
+├─ mobilenetv2_model.h5    # Saved model after training
+├─ best_model.h5           # Best of the two based on val_accuracy
+└─ README.md
+```
+
+---
+
+## Dataset Layout
+```
 dataset/
-├── Train/
-│ ├── freshapples/
-│ ├── rottenapples/
-│ ├── freshbanana/
-│ ├── rottenbanana/
-│ ├── freshoranges/
-│ ├── rottenoranges/
-├── Test/
-│ ├── freshapples/
-│ ├── rottenapples/
-│ ├── freshbanana/
-│ ├── rottenbanana/
-│ ├── freshoranges/
-│ ├── rottenoranges/
+├─ Train/
+│  ├─ freshapples/
+│  ├─ rottenapples/
+│  ├─ freshbanana/
+│  ├─ rottenbanana/
+│  ├─ freshoranges/
+│  └─ rottenoranges/
+└─ Test/
+   ├─ freshapples/
+   ├─ rottenapples/
+   ├─ freshbanana/
+   ├─ rottenbanana/
+   ├─ freshoranges/
+   └─ rottenoranges/
+```
 
-
-
-> Note: Dataset was reduced for training on a low-spec machine to speed up training.
-
----
-
-## Technologies Used
-
-- **Python 3.10+**  
-- **TensorFlow / Keras** – for deep learning model building  
-- **NumPy, PIL** – for image processing  
-- **Scikit-learn** – for evaluation metrics  
-- **FastAPI** – for deploying the model as a web service  
-- **Bootstrap** – for front-end user interface  
+- Images can be JPG/PNG/WebP.
+- Class folder names must match the above exactly; training code infers labels from folders.
 
 ---
 
-## Setup Instructions
+## Requirements
+- Python 3.10+
+- Recommended GPU with CUDA for faster training (CPU works but is slower)
 
-1. **Clone the repository**
+Python packages (installed below): TensorFlow, scikit‑learn, FastAPI, Uvicorn, Pillow, NumPy.
 
+---
 
-git clone https://github.com/<your-username>/AdvancedFruitQualityDetection.git
-cd AdvancedFruitQualityDetection
-Create a virtual environment
+## Setup
+On Windows PowerShell:
 
+```powershell
+# 1) Create and activate venv
+python -m venv .venv
+.\.venv\Scripts\Activate
 
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-Install dependencies
+# 2) Install dependencies
+pip install --upgrade pip
+pip install tensorflow fastapi uvicorn[standard] pillow numpy scikit-learn jinja2
+```
 
+Place the `dataset/` directory at the project root matching the [Dataset Layout](#dataset-layout).
 
-pip install -r requirements.txt
-Ensure dataset folder is in project root
-The folder structure should match the Dataset section above.
+---
 
-Train the models (Optional if you want to retrain)
+## Train Models
+`model.py` trains two models and saves:
+- `simple_cnn_model.h5`
+- `mobilenetv2_model.h5`
+- `best_model.h5` (whichever achieved higher validation accuracy)
 
-
+Run:
+```powershell
 python model.py
-This will train both Simple CNN and MobileNetV2 and save the best model as best_model.h5.
+```
+Key defaults inside `model.py`:
+- Image size: 128×128
+- Batch size: 16
+- Epochs: 10
 
-Run the FastAPI application
+---
 
+## Run the Web App
+The app loads `best_model.h5` and serves a web UI.
 
-uvicorn app:app --reload
-Access the web interface
-Open your browser at http://127.0.0.1:8000
+```powershell
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+Then open: `http://127.0.0.1:8000`
 
-Usage
-Upload an image of a fruit (apple, banana, or orange).
+Usage:
+- Upload a single fruit image (apple, banana, or orange)
+- Get prediction such as `freshbanana` with confidence percentage
 
-The system will predict whether the fruit is fresh or rotten.
+---
 
-The result will display the predicted class and confidence score.
+## Models and Accuracy
+- Simple CNN: 3 conv blocks, dropout, dense head; trained from scratch
+- MobileNetV2: ImageNet‑pretrained backbone, frozen for feature extraction + GAP + dense head
+- The UI highlights a nominal accuracy of ~98% shown in the page; actual accuracy depends on your dataset split and size. Refer to the printed `classification_report` in console after training for precise metrics.
 
-Model Details
-Model 1: Simple CNN
-Convolutional layers with ReLU activations
+---
 
-MaxPooling layers for downsampling
+## Notes and Tips
+- If you already have `best_model.h5`, you can skip training and run the app directly.
+- Ensure class names in `main.py` match your dataset folders if you customize classes.
+- If you change image size or classes, retrain and regenerate `best_model.h5`.
+- For larger datasets, consider enabling GPU and increasing epochs.
 
-Dropout layer for regularization
+---
 
-Dense layers with softmax for classification
-
-Model 2: MobileNetV2 (Transfer Learning)
-Pretrained on ImageNet
-
-Feature extraction frozen initially
-
-Global Average Pooling + Dense layer for classification
-
-Dropout for regularization
-
-Best Model: Simple CNN (achieved ~98% accuracy on the test set)
-
-Evaluation Metrics
-Accuracy: 0.98
-
-Precision, Recall, F1-Score: Calculated per fruit class
-
-Confusion matrix and classification report generated for detailed performance
-
-Place screenshots of metrics and confusion matrices here
-
-Challenges
-Limited machine specs forced dataset reduction
-
-MobileNetV2 performed worse due to small dataset size
-
-Choosing the best model required multiple experiments
-
-Long training time for high-resolution images
-
-Future Improvements
-Train on larger dataset for better generalization
-
-Add more fruit categories
-
-Integrate real-time camera feed for live classification
-
-Deploy on cloud for mobile or web access
-
-License
+## License
 This project is for academic purposes. No commercial use allowed.
 
-Author
-Sasindu Bandara – BSc Computing Student, Sri Lanka
+## Author
+Sasindu Bandara — BSc Computing Student, Sri Lanka
