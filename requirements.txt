@@ -7,4 +7,6 @@ pillow==10.2.0
 numpy==1.26.4
 # Use TF 2.16 which is compatible with newer typing-extensions
 tensorflow==2.16.1
+# Required for FastAPI form/file uploads
+python-multipart==0.0.9
 
